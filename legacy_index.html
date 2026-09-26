@@ -1,0 +1,1988 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BLW Accommodation Management</title>
+    <style>
+        :root {
+            /* Minimalist Color Palette */
+            --primary: #0f172a;
+            --primary-hover: #334155;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --border-color: #e2e8f0;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            /* Status Colors */
+            --available: #10b981;
+            --booked: #ef4444;
+            --blocked: #94a3b8;
+            /* Tags */
+            --tag-vip: #fef3c7;
+            --tag-vip-text: #d97706;
+            --tag-restricted: #f3e8ff;
+            --tag-restricted-text: #7e22ce;
+            --tag-type: #e0f2fe;
+            --tag-type-text: #0369a1;
+            /* Timeline Colors */
+            --cat-duty: #2563eb;
+            /* Blue */
+            --cat-private: #d97706;
+            /* Amber/Orange */
+            --cat-guest: #7c3aed;
+            /* Purple */
+        }
+
+        body.dark-mode {
+            --primary: #38bdf8;
+            --primary-hover: #7dd3fc;
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --border-color: #334155;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --tag-vip: #451a03;
+            --tag-vip-text: #fcd34d;
+            --tag-restricted: #3b0764;
+            --tag-restricted-text: #d8b4fe;
+            --tag-type: #0c4a6e;
+            --tag-type-text: #bae6fd;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 30px 20px;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.5;
+            transition: background-color 0.3s;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* Login */
+        .login-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 80vh;
+        }
+
+        .login-card {
+            background: var(--card-bg);
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--border-color);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        /* Layout */
+        header {
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+
+        .header-left h1 {
+            margin: 0;
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .version-tag {
+            font-size: 0.8rem;
+            background: var(--border-color);
+            padding: 2px 6px;
+            border-radius: 4px;
+            vertical-align: middle;
+            margin-left: 8px;
+            color: var(--text-muted);
+        }
+
+        .subtitle {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 30px;
+            margin-bottom: 25px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .tab-btn {
+            padding: 10px 0;
+            border: none;
+            background: none;
+            font-weight: 600;
+            cursor: pointer;
+            color: var(--text-muted);
+            font-size: 1rem;
+            border-bottom: 2px solid transparent;
+        }
+
+        .tab-btn.active {
+            color: var(--primary);
+            border-bottom: 2px solid var(--primary);
+        }
+
+        .toolbar {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 30px;
+        }
+
+        .stats-group {
+            display: flex;
+            gap: 24px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text-muted);
+        }
+
+        .stat-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 6px;
+        }
+
+        .action-group {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        /* Grid */
+        .room-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 20px;
+        }
+
+        .room-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 140px;
+            position: relative;
+        }
+
+        .room-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+            border-color: var(--primary);
+        }
+
+        .status-indicator {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .room-card.available .status-indicator {
+            background-color: var(--available);
+        }
+
+        .room-card.booked .status-indicator {
+            background-color: var(--booked);
+        }
+
+        .room-card.blocked .status-indicator {
+            background-color: var(--blocked);
+        }
+
+        .room-card.blocked {
+            opacity: 0.7;
+        }
+
+        .room-number {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 8px;
+        }
+
+        .tag-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            justify-content: center;
+            margin-top: 5px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+
+        .badge-vip {
+            background-color: var(--tag-vip);
+            color: var(--tag-vip-text);
+        }
+
+        .badge-restricted {
+            background-color: var(--tag-restricted);
+            color: var(--tag-restricted-text);
+        }
+
+        .badge-type {
+            background-color: var(--tag-type);
+            color: var(--tag-type-text);
+        }
+
+        .occupant-info {
+            margin-top: 15px;
+            font-size: 0.85rem;
+        }
+
+        .occupant-name {
+            font-weight: 600;
+            color: var(--text-main);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .upcoming-indicator {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 12px;
+            font-weight: 500;
+        }
+
+        /* Forms */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(4px);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background-color: var(--card-bg);
+            padding: 30px;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--border-color);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .form-section {
+            background: var(--bg-color);
+            padding: 20px;
+            border-radius: 12px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 500;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 10px 12px;
+            background-color: var(--card-bg);
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-family: inherit;
+            font-size: 0.95rem;
+        }
+
+        .btn-group {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        button.action-btn {
+            padding: 10px 18px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        .btn-save {
+            background-color: var(--primary);
+            color: var(--bg-color);
+        }
+
+        .btn-cancel {
+            background-color: var(--card-bg);
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: var(--primary);
+            border: 1px solid var(--primary);
+        }
+
+        .booking-list {
+            margin-bottom: 25px;
+            max-height: 180px;
+            overflow-y: auto;
+        }
+
+        .booking-item {
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9rem;
+        }
+
+        .checkbox-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--bg-color);
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            padding: 5px;
+            background: var(--card-bg);
+            border-radius: 4px;
+        }
+
+        /* Report Table */
+        .report-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+
+        .report-table th,
+        .report-table td {
+            border: 1px solid var(--border-color);
+            padding: 8px;
+            text-align: left;
+        }
+
+        .report-table th {
+            background-color: var(--bg-color);
+            font-weight: 600;
+        }
+
+        .error-msg {
+            color: var(--booked);
+            font-size: 0.85rem;
+            margin-top: 8px;
+            display: none;
+            font-weight: 500;
+        }
+
+        /* Timeline Specifics */
+        .timeline-header-row {
+            display: flex;
+            margin-left: 90px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+        }
+
+        .timeline-day {
+            flex: 1;
+            min-width: 60px;
+            text-align: center;
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            border-right: 1px solid var(--border-color);
+        }
+
+        .timeline-row {
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            height: 46px;
+            position: relative;
+        }
+
+        .timeline-room-label {
+            width: 90px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            flex-shrink: 0;
+            color: var(--text-main);
+        }
+
+        .timeline-track {
+            flex: 1;
+            position: relative;
+            height: 100%;
+            min-width: 840px;
+            border-left: 1px solid var(--border-color);
+        }
+
+        .timeline-bar {
+            position: absolute;
+            height: 28px;
+            top: 9px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: white;
+            padding: 0 10px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            box-sizing: border-box;
+            display: flex;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .timeline-grid-line {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 1px;
+            background: var(--border-color);
+            opacity: 0.5;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.8rem;
+        }
+
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
+        }
+
+        /* Allotment Assistant Specifics */
+        .allotment-row {
+            display: grid;
+            grid-template-columns: 80px 90px 70px 40px 1fr 1fr 90px 40px;
+            gap: 8px;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid var(--border-color);
+            background: var(--card-bg);
+        }
+
+        .allotment-result-row {
+            padding: 15px;
+            border-bottom: 1px solid var(--border-color);
+            background: var(--bg-color);
+            border-radius: 6px;
+            margin-bottom: 10px;
+        }
+
+        .allotment-score {
+            display: inline-block;
+            padding: 2px 6px;
+            background: var(--primary);
+            color: white;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: bold;
+        }
+
+        .config-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+        }
+
+        .config-card {
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background: var(--card-bg);
+        }
+
+        .time-select-group {
+            display: flex;
+            gap: 5px;
+        }
+
+        .time-select-group input {
+            flex: 2;
+        }
+
+        .time-select-group select {
+            flex: 1;
+        }
+
+        .section-header {
+            grid-column: 1 / -1;
+            margin-top: 15px;
+            padding-bottom: 5px;
+            border-bottom: 2px solid var(--border-color);
+            font-weight: bold;
+            color: var(--primary);
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Login Screen -->
+    <div id="loginContainer" class="login-wrapper">
+        <div class="login-card">
+            <h2>System Login</h2>
+            <!-- Defaults Removed -->
+            <form id="loginForm" onsubmit="event.preventDefault(); window.handleLogin(event);">
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="username" required>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="password" required>
+                </div>
+                <div id="loginError" class="error-msg" style="text-align: center;">Invalid credentials.</div>
+                <button type="button" class="action-btn btn-save" style="width: 100%; margin-top: 15px;"
+                    onclick="window.handleLogin(event)">Login</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main Application -->
+    <div class="container" id="appContainer" style="display: none;">
+        <header>
+            <div class="header-left">
+                <h1>Accommodation Management <span class="version-tag">v2.0</span></h1>
+                <div class="subtitle">Administrator Console</div>
+            </div>
+            <div class="header-controls">
+                <span id="lastSyncTime" style="font-size: 0.8rem; color: var(--text-muted); margin-right: 10px;"></span>
+                <button onclick="ui.forceSync()" class="action-btn btn-outline" id="btnSync">Sync Now</button>
+                <button onclick="ui.toggleTheme()" class="action-btn btn-outline" id="themeToggleBtn">Dark Mode</button>
+                <button onclick="ui.openSettingsModal()" class="action-btn btn-outline">Settings</button>
+                <button onclick="ui.handleLogout()" class="action-btn btn-cancel">Logout</button>
+            </div>
+        </header>
+
+        <div class="tabs">
+            <button class="tab-btn active" id="btnTabOGH" onclick="ui.switchBuilding('OGH')">Officers' Guest
+                House</button>
+            <button class="tab-btn" id="btnTabORH" onclick="ui.switchBuilding('ORH')">Officers' Rest House</button>
+        </div>
+
+        <div class="toolbar">
+            <div class="stats-group">
+                <span>Inventory: <strong id="count-total">0</strong></span>
+                <span><span class="stat-dot" style="background: var(--available)"></span>Available: <strong
+                        id="count-available">0</strong></span>
+                <span><span class="stat-dot" style="background: var(--booked)"></span>Occupied: <strong
+                        id="count-booked">0</strong></span>
+                <span><span class="stat-dot" style="background: var(--blocked)"></span>Blocked: <strong
+                        id="count-blocked">0</strong></span>
+            </div>
+
+            <div class="action-group">
+                <select id="displayPreference" onchange="ui.renderGrid()">
+                    <option value="name">Show: Guest Name</option>
+                    <option value="ref">Show: Reference</option>
+                </select>
+                <button onclick="ui.openReportModal()" class="action-btn btn-outline">Reports</button>
+                <button onclick="allotmentUi.openModal()" class="action-btn btn-outline"
+                    style="border-color: var(--cat-duty); color: var(--cat-duty);">Allotment Asst.</button>
+                <button onclick="ui.openMultiBookModal()" class="action-btn btn-save">Multi-Room</button>
+                <button onclick="ui.openSearchModal()" class="action-btn btn-save">Search</button>
+                <button onclick="ui.openTimeline()" class="action-btn btn-outline">Timeline</button>
+            </div>
+        </div>
+
+        <div class="room-grid" id="roomGrid"></div>
+    </div>
+
+    <!-- ================= MODALS ================= -->
+
+    <!-- Allotment Assistant Modal -->
+    <div class="modal" id="allotmentModal">
+        <div class="modal-content" style="max-width: 1100px; height: 85vh;">
+            <div class="modal-header">
+                <h2>Room Allotment Assistant</h2>
+                <button class="tab-btn" style="font-size: 1.5rem; line-height: 1; padding: 0;"
+                    onclick="ui.closeModal('allotmentModal')">&times;</button>
+            </div>
+
+            <div class="tabs" style="margin-bottom: 15px;">
+                <button class="tab-btn active" id="btnTabAllotRequest"
+                    onclick="allotmentUi.switchTab('request')">Booking Requests</button>
+                <button class="tab-btn" id="btnTabAllotConfig" onclick="allotmentUi.switchTab('config')">Room
+                    Configuration</button>
+            </div>
+
+            <!-- Tab 1: Requests -->
+            <div id="allotRequestTab">
+                <!-- Optimization Panel -->
+                <div
+                    style="background: #e0f2fe; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #bae6fd;">
+                    <h4 style="margin: 0 0 10px 0; color: #0369a1;">Optimize Existing Bookings</h4>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <div class="time-select-group" style="flex:1;">
+                            <input type="date" id="optDateFrom">
+                            <input type="date" id="optDateTo">
+                        </div>
+                        <button class="action-btn btn-save" style="background: #0284c7;"
+                            onclick="allotmentUi.loadExistingForOptimization()">Load & Optimize</button>
+                    </div>
+                    <div style="font-size: 0.75rem; margin-top: 5px; color: #0c4a6e;">* Imports active bookings. Update
+                        levels/status below, then click Calculate.</div>
+                </div>
+
+                <div style="background: var(--bg-color); padding: 10px; border-radius: 8px; margin-bottom: 15px;">
+                    <div
+                        style="display: grid; grid-template-columns: 80px 90px 70px 40px 1fr 1fr 90px 40px; gap: 8px; font-weight: bold; font-size: 0.85rem; padding-bottom: 5px; border-bottom: 1px solid var(--border-color); margin-bottom: 5px;">
+                        <div>Level</div>
+                        <div>Status</div>
+                        <div>Beds</div>
+                        <div>GF</div>
+                        <div>From (Date + Hour)</div>
+                        <div>To (Date + Hour)</div>
+                        <div>Purpose</div>
+                        <div></div>
+                    </div>
+                    <div id="allotmentRowsContainer">
+                        <!-- Rows will be added here -->
+                    </div>
+                    <div style="display: flex; gap: 10px; margin-top: 10px;">
+                        <button onclick="allotmentUi.addRow()" class="action-btn btn-outline"
+                            style="flex: 2; border-style: dashed;">+ Add Request Row</button>
+                        <button onclick="allotmentUi.generateTestData()" class="action-btn btn-outline"
+                            style="flex: 1; border-style: dashed; border-color: var(--cat-guest); color: var(--cat-guest);">Generate
+                            Test Data</button>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 15px; align-items: center; margin-bottom: 20px;">
+                    <button class="action-btn btn-save" style="flex: 1;"
+                        onclick="allotmentUi.calculateAllotment()">Calculate Allotment Plan</button>
+                    <div style="font-weight: 500;">
+                        <input type="checkbox" id="includeOrhReq"> Include ORH Rooms
+                    </div>
+                </div>
+
+                <div id="allotmentResults" style="border-top: 2px solid var(--border-color); padding-top: 15px;">
+                    <!-- Results go here -->
+                    <div style="color: var(--text-muted); text-align: center;">Enter requests above and click Calculate.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 2: Config -->
+            <div id="allotConfigTab" style="display: none;">
+                <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 15px;">Configure the minimum
+                    officer level required for each room.</p>
+                <div class="config-grid" id="roomConfigGrid"></div>
+                <button class="action-btn btn-save" style="margin-top: 15px;" onclick="allotmentUi.saveConfig()">Save
+                    Configuration</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Booking Modal -->
+    <div class="modal" id="bookingModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Room Management</h2>
+                <button class="tab-btn" style="font-size: 1.5rem; line-height: 1; padding: 0;"
+                    onclick="ui.closeModal('bookingModal')">&times;</button>
+            </div>
+            <div class="booking-list" id="bookingList"></div>
+            <div class="form-section">
+                <h3 id="formHeader" style="margin-top:0; margin-bottom: 15px; font-size: 1rem; font-weight: 600;">Add
+                    New Entry</h3>
+                <form id="bookingForm">
+                    <input type="hidden" id="selectedRoomId">
+                    <input type="hidden" id="editingBookingId">
+
+                    <div class="form-group">
+                        <label>Category (Category)</label>
+                        <select id="category" required onchange="ui.handleCategoryChange()">
+                            <option value="On Duty">On Duty</option>
+                            <option value="Private">Private</option>
+                            <option value="Guest">Guest</option>
+                            <option value="Maintenance">Blocked for Maintenance</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group" id="guestNameGroup">
+                        <label>Name / Designation (नाम/पदनाम)</label>
+                        <input type="text" id="guestName" placeholder="Enter Name" required>
+                    </div>
+
+                    <div class="form-group" id="designationGroup">
+                        <label>Designation (Place)</label>
+                        <input type="text" id="guestPlace" placeholder="e.g. CEE/Loco">
+                    </div>
+
+                    <div class="form-group" id="referenceNameGroup">
+                        <label>Guest of (S/Shri) - Reference</label>
+                        <input type="text" id="referenceName" placeholder="Enter reference">
+                    </div>
+
+                    <div class="form-group" id="fromGroup">
+                        <label>From Where (कहॉं से)</label>
+                        <input type="text" id="guestFrom" placeholder="Arrival from">
+                    </div>
+
+                    <div class="form-group" id="mobileGroup">
+                        <label>Mobile No.</label>
+                        <input type="tel" id="guestMobile" placeholder="10-digit number">
+                    </div>
+
+                    <div style="display: flex; gap: 15px;">
+                        <div class="form-group" style="flex: 1;">
+                            <label>From (कब से)</label>
+                            <input type="datetime-local" id="checkIn" required>
+                        </div>
+                        <div class="form-group" style="flex: 1;">
+                            <label>To (कब तक)</label>
+                            <input type="datetime-local" id="checkOut" required>
+                        </div>
+                    </div>
+                    <div id="errorMsg" class="error-msg">Dates overlap with an existing booking.</div>
+                    <div class="btn-group">
+                        <button type="button" class="action-btn btn-cancel" id="btnCancelEdit" style="display:none;"
+                            onclick="ui.cancelEdit()">Cancel Edit</button>
+                        <button type="submit" class="action-btn btn-save" id="btnSave">Confirm Booking</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Multi-Room Modal -->
+    <div class="modal" id="multiBookModal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h2>Multi-Room Booking</h2>
+                <button class="tab-btn" style="font-size: 1.5rem; line-height: 1; padding: 0;"
+                    onclick="ui.closeModal('multiBookModal')">&times;</button>
+            </div>
+            <form id="multiBookForm">
+                <div class="form-section" style="margin-bottom: 15px;">
+                    <h3 style="margin:0 0 10px 0; font-size:0.95rem;">1. Guest Details</h3>
+                    <div class="form-group">
+                        <label>Category</label>
+                        <select id="mbCategory" required onchange="ui.handleMbCategory()">
+                            <option value="On Duty">On Duty</option>
+                            <option value="Private">Private</option>
+                            <option value="Guest">Guest</option>
+                            <option value="Maintenance">Blocked for Maintenance</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="mbNameGroup"><label>Name</label><input type="text" id="mbGuestName"
+                            required></div>
+
+                    <div style="display: flex; gap: 10px;">
+                        <div class="form-group" style="flex: 1;" id="mbPlaceGroup"><label>Designation</label><input
+                                type="text" id="mbGuestPlace"></div>
+                        <div class="form-group" style="flex: 1;" id="mbFromGroup"><label>From Where</label><input
+                                type="text" id="mbGuestFrom"></div>
+                    </div>
+
+                    <div class="form-group" id="mbRefGroup"><label>Guest of (Ref)</label><input type="text"
+                            id="mbReference"></div>
+                    <div class="form-group" id="mbMobileGroup"><label>Mobile</label><input type="tel"
+                            id="mbGuestMobile"></div>
+                </div>
+
+                <div class="form-section" style="margin-bottom: 15px;">
+                    <h3 style="margin:0 0 10px 0; font-size:0.95rem;">2. Schedule</h3>
+                    <div style="display: flex; gap: 15px; align-items: flex-end;">
+                        <div class="form-group" style="flex: 1;"><label>From</label><input type="datetime-local"
+                                id="mbCheckIn" required onchange="ui.checkMultiAvailability()"></div>
+                        <div class="form-group" style="flex: 1;"><label>To</label><input type="datetime-local"
+                                id="mbCheckOut" required onchange="ui.checkMultiAvailability()"></div>
+                    </div>
+                </div>
+                <div class="form-section">
+                    <h3 style="margin:0 0 10px 0; font-size:0.95rem;">3. Select Rooms (<span
+                            id="mbBuildingName">OGH</span>)</h3>
+                    <div id="mbRoomList" class="checkbox-grid">
+                        <div style="color:var(--text-muted); padding:10px;">Select dates to see available rooms.</div>
+                    </div>
+                </div>
+                <div id="mbError" class="error-msg">Please select at least one room.</div>
+                <div class="btn-group"><button type="submit" class="action-btn btn-save" style="width: 100%;">Confirm
+                        All Bookings</button></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Report Modal -->
+    <div class="modal" id="reportModal">
+        <div class="modal-content" style="max-width: 900px;">
+            <div class="modal-header">
+                <h2>Generate Report</h2><button class="tab-btn" style="font-size: 1.5rem; line-height: 1; padding: 0;"
+                    onclick="ui.closeModal('reportModal')">&times;</button>
+            </div>
+            <div class="form-section" style="margin-bottom: 20px; display: flex; gap: 15px; align-items: flex-end;">
+                <div class="form-group" style="flex: 1; margin: 0;"><label>From Date & Time</label><input
+                        type="datetime-local" id="reportFrom"></div>
+                <div class="form-group" style="flex: 1; margin: 0;"><label>To Date & Time</label><input
+                        type="datetime-local" id="reportTo"></div>
+                <button class="action-btn btn-save" onclick="ui.generateReport()">Generate</button>
+            </div>
+            <div id="reportPreviewArea" style="display: none;">
+                <div style="display: flex; justify-content: flex-end; margin-bottom: 10px;"><button
+                        class="action-btn btn-outline" onclick="ui.printReport()">Print Report</button></div>
+                <div id="reportTableContainer"
+                    style="overflow-x: auto; border: 1px solid var(--border-color); border-radius: 4px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search Modal -->
+    <div class="modal" id="searchModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Search Availability</h2><button class="tab-btn"
+                    style="font-size: 1.5rem; line-height: 1; padding: 0;"
+                    onclick="ui.closeModal('searchModal')">&times;</button>
+            </div>
+            <div class="form-group"><label>Check-in Time</label><input type="datetime-local" id="searchCheckIn"></div>
+            <div class="form-group"><label>Check-out Time</label><input type="datetime-local" id="searchCheckOut"></div>
+            <button type="button" class="action-btn btn-save" style="width: 100%; margin-bottom: 20px;"
+                onclick="ui.performSearch()">Find Vacant Rooms</button>
+            <div id="searchResults" style="max-height: 250px; overflow-y: auto;"></div>
+        </div>
+    </div>
+
+    <!-- Timeline Modal -->
+    <div class="modal" id="timelineModal">
+        <div class="modal-content">
+            <div class="modal-header" style="margin-bottom: 15px;">
+                <h2><span id="timelineBuildingTitle">OGH</span> Timeline</h2>
+                <div class="action-group">
+                    <button class="action-btn btn-outline" onclick="ui.printTimeline()">Print PDF</button>
+                    <button class="tab-btn" style="font-size: 1.5rem; line-height: 1; padding: 0; margin-left: 10px;"
+                        onclick="ui.closeModal('timelineModal')">&times;</button>
+                </div>
+            </div>
+            <div style="display: flex; gap: 20px; margin-bottom: 15px; justify-content: flex-end;">
+                <div class="legend-item">
+                    <div class="legend-color" style="background: var(--cat-duty);"></div> On Duty
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: var(--cat-private);"></div> Private
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: var(--cat-guest);"></div> Guest
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: var(--blocked);"></div> Maint.
+                </div>
+            </div>
+            <div id="timelineContainer"
+                style="overflow-x: auto; position: relative; max-height: 60vh; overflow-y: auto;"></div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal" id="settingsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Settings</h2><button class="tab-btn" style="font-size: 1.5rem; line-height: 1; padding: 0;"
+                    onclick="ui.closeModal('settingsModal')">&times;</button>
+            </div>
+            <div class="form-section" style="margin-bottom: 20px;">
+                <h3 style="margin-top:0; font-size: 1rem; font-weight: 600;">Change Credentials</h3>
+                <div class="form-group"><label>New Username</label><input type="text" id="newUsername"></div>
+                <div class="form-group"><label>New Password</label><input type="password" id="newPassword"></div>
+                <button class="action-btn btn-save" onclick="ui.updateCredentials()">Update</button>
+                <div id="credMsg" style="font-size: 0.85rem; margin-top: 10px; color: var(--available); display: none;">
+                    Updated!</div>
+            </div>
+            <div class="form-section">
+                <h3 style="margin-top:0; font-size: 1rem; font-weight: 600;">Manual Backup & Restore</h3>
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 15px;">Download all data to keep
+                    a safe copy, or upload a previously saved file to restore.</p>
+                <div style="display:flex; gap:10px;">
+                    <button class="action-btn btn-outline" style="flex:1" onclick="ui.backupAllData()">Download Full
+                        Backup</button>
+                    <div style="flex:1; position:relative; overflow:hidden;">
+                        <button class="action-btn btn-save" style="width:100%;">Restore from Backup</button>
+                        <input type="file" id="restoreFile" accept=".csv" onchange="ui.restoreFromBackup(event)"
+                            style="position:absolute; left:0; top:0; opacity:0; width:100%; height:100%; cursor:pointer;">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <script>
+        // Supabase Configuration
+        const SUPABASE_URL = "https://arrirfnzdgxisxsvbwdv.supabase.co";
+        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFycmlyZm56ZGd4aXN4c3Zid2R2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk1NDkyMjgsImV4cCI6MjEwNTEyNTIyOH0.OGLQzTomx2Q8k471TJ7CqI5FzWG8EfySoR-ucpwkpD4";
+
+        // Initialize Supabase
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        const STORAGE_KEY = 'blw_accomm_data_v5';
+        const CONFIG_KEY = 'blw_room_config';
+        const LOGIN_KEY = 'blw_logged_in';
+        const CRED_KEY = 'blw_credentials';
+        const THEME_KEY = 'blw_theme';
+
+        let rooms = [
+            // OGH
+            { id: '01', type: 'Standard', restricted: false, building: 'OGH' }, { id: '02', type: 'Standard', restricted: false, building: 'OGH' }, { id: '03', type: 'Standard', restricted: false, building: 'OGH' },
+            { id: '04', type: '4-Bedded', restricted: false, building: 'OGH' }, { id: '05', type: 'Standard', restricted: false, building: 'OGH' }, { id: '06', type: 'Standard', restricted: false, building: 'OGH' },
+            { id: '07', type: 'Standard', restricted: false, building: 'OGH' }, { id: '08', type: 'Standard', restricted: true, building: 'OGH' }, { id: '09', type: 'VIP', restricted: true, building: 'OGH' },
+            { id: '10', type: 'Standard', restricted: true, building: 'OGH' }, { id: '11', type: 'Standard', restricted: true, building: 'OGH' }, { id: '12', type: 'VIP', restricted: true, building: 'OGH' },
+            { id: '13', type: 'VVIP', restricted: true, building: 'OGH' }, { id: '14A', type: 'Semi-VIP', restricted: false, building: 'OGH' }, { id: '14B', type: '4-Bedded', restricted: false, building: 'OGH' },
+            { id: '15', type: '4-Bedded', restricted: false, building: 'OGH' }, { id: '16', type: 'Normal', restricted: false, building: 'OGH' }, { id: '17', type: 'Normal', restricted: false, building: 'OGH' },
+            { id: '18', type: 'Normal', restricted: false, building: 'OGH' }, { id: '19', type: '4-Bedded', restricted: false, building: 'OGH' }, { id: '20', type: 'Normal', restricted: false, building: 'OGH' },
+            { id: '21', type: 'Normal', restricted: false, building: 'OGH' }, { id: '22', type: 'Normal', restricted: false, building: 'OGH' }, { id: '23', type: '4-Bedded', restricted: false, building: 'OGH' },
+            { id: '24', type: '4-Bedded', restricted: false, building: 'OGH' }, { id: '25', type: 'VIP 4-Bedded', restricted: false, building: 'OGH' }, { id: '26', type: '4-Bedded', restricted: false, building: 'OGH' },
+            { id: '27', type: 'Standard', restricted: false, building: 'OGH' }, { id: '28', type: '4-Bedded', restricted: false, building: 'OGH' },
+            // ORH - Updated 13 Rooms total
+            { id: '101', type: '2-Bedded', restricted: false, building: 'ORH', note: 'Buffer' },
+            { id: '107', type: '4-Bedded', restricted: false, building: 'ORH', note: 'Offline Transit' },
+            { id: '108', type: '4-Bedded', restricted: false, building: 'ORH', note: 'Offline Transit' },
+            { id: '109', type: '4-Bedded', restricted: false, building: 'ORH', note: 'Offline Transit' },
+            { id: '110', type: '4-Bedded', restricted: false, building: 'ORH', note: 'Offline Transit' },
+            { id: '203', type: '4-Bedded', restricted: false, building: 'ORH', note: 'Buffer' },
+            { id: 'T1', type: '2-Bedded', restricted: false, building: 'ORH', note: 'Offline Transit' },
+            { id: 'T2', type: '2-Bedded', restricted: false, building: 'ORH', note: 'Offline Transit' },
+            { id: 'T3', type: '2-Bedded', restricted: false, building: 'ORH', note: 'Offline Transit' },
+            { id: 'T4', type: '2-Bedded', restricted: false, building: 'ORH', note: 'Offline Transit' },
+            { id: 'T5', type: '2-Bedded', restricted: false, building: 'ORH', note: 'Offline Transit' },
+            { id: 'T6', type: '2-Bedded', restricted: false, building: 'ORH', note: 'Offline Transit' },
+            { id: 'T7', type: '2-Bedded', restricted: false, building: 'ORH', note: 'Offline Transit' },
+            { id: 'T8', type: '2-Bedded', restricted: false, building: 'ORH', note: 'Offline Transit' }
+        ];
+
+        let currentBuilding = 'OGH';
+
+        // Default configs for OGH
+        let defaultRoomConfigs = {};
+        rooms.forEach(r => {
+            let level = 11; // Base default for ORH
+            if (r.building === 'OGH') {
+                level = 13; // Base default for OGH
+                if (r.id === '13') level = 17; // VVIP
+                else if (r.type.includes('VIP') && !r.type.includes('Semi')) level = 15;
+                else if (r.type.includes('Semi-VIP')) level = 14;
+            }
+            defaultRoomConfigs[`${r.building}_${r.id}`] = level.toString();
+        });
+
+        // Merge with stored configs
+        let savedConfigs = JSON.parse(localStorage.getItem(CONFIG_KEY) || '{}');
+        let roomConfigs = { ...defaultRoomConfigs, ...savedConfigs };
+
+        // Init Local State
+        rooms = rooms.map(r => ({ ...r, bookings: [] }));
+
+        // 1. Initial Local Load (immediate fast response & fallback)
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+            try {
+                const parsed = JSON.parse(saved);
+                rooms.forEach(r => {
+                    const match = parsed.find(p => p.id === r.id && p.building === r.building);
+                    if (match) r.bookings = match.bookings;
+                });
+            } catch (e) { console.error("Local parse error", e); }
+        }
+
+        // 2. Initial Cloud Fetch & Listeners
+        const processCloudData = (dataStr) => {
+            try {
+                const parsed = JSON.parse(dataStr);
+                rooms.forEach(r => r.bookings = []);
+                rooms.forEach(r => {
+                    const match = parsed.find(p => p.id === r.id && p.building === r.building);
+                    if (match) r.bookings = match.bookings;
+                });
+
+                localStorage.setItem(STORAGE_KEY, dataStr);
+
+                if (window.ui && window.ui.updateLastSyncTime) {
+                    window.ui.updateLastSyncTime();
+                }
+
+                if (localStorage.getItem(LOGIN_KEY) === 'true') {
+                    if (window.ui && window.ui.renderGrid) {
+                        window.ui.renderGrid();
+                        const sId = document.getElementById('selectedRoomId') ? document.getElementById('selectedRoomId').value : null;
+                        const mDisp = document.getElementById('bookingModal') ? document.getElementById('bookingModal').style.display : 'none';
+                        if (sId && mDisp === 'flex' && window.ui.renderBookingList) {
+                            window.ui.renderBookingList(sId);
+                        }
+                    }
+                }
+            } catch (e) { console.error("Cloud parse error", e); }
+        };
+
+        const loadInitialState = async () => {
+            const { data, error } = await supabaseClient.from('app_data').select('roomsJson').eq('id', 'state').single();
+            if (data) {
+                processCloudData(data.roomsJson);
+            } else if (!error || error.code === 'PGRST116') {
+                // Document doesn't exist, create it if we have local data
+                if (saved) {
+                    await supabaseClient.from('app_data').insert([{ id: 'state', roomsJson: JSON.stringify(rooms) }]);
+                }
+            }
+        };
+
+        loadInitialState();
+
+        // Listen for Real-Time Changes
+        supabaseClient.channel('custom-all-channel')
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'app_data', filter: 'id=eq.state' },
+                (payload) => {
+                    if (payload.new && payload.new.roomsJson) {
+                        processCloudData(payload.new.roomsJson);
+                    }
+                }
+            )
+            .subscribe((status) => {
+                if (status !== 'SUBSCRIBED') console.error("Supabase listen error", status);
+            });
+
+        const allotmentUi = {
+            rowCount: 0,
+            openModal: () => {
+                document.getElementById('allotmentModal').style.display = 'flex';
+                allotmentUi.switchTab('request');
+                allotmentUi.renderConfigGrid();
+
+                // Set default dates for optimization
+                const now = new Date();
+                document.getElementById('optDateFrom').valueAsDate = now;
+                const tmrw = new Date(now); tmrw.setDate(tmrw.getDate() + 7);
+                document.getElementById('optDateTo').valueAsDate = tmrw;
+
+                if (document.getElementById('allotmentRowsContainer').children.length === 0) allotmentUi.addRow();
+            },
+            switchTab: (tab) => {
+                document.getElementById('allotRequestTab').style.display = tab === 'request' ? 'block' : 'none';
+                document.getElementById('allotConfigTab').style.display = tab === 'config' ? 'block' : 'none';
+                document.getElementById('btnTabAllotRequest').className = `tab-btn ${tab === 'request' ? 'active' : ''}`;
+                document.getElementById('btnTabAllotConfig').className = `tab-btn ${tab === 'config' ? 'active' : ''}`;
+            },
+            renderConfigGrid: () => {
+                const container = document.getElementById('roomConfigGrid');
+                const buildings = ['OGH', 'ORH'];
+                let html = '';
+
+                buildings.forEach(b => {
+                    html += `<div class="section-header">${b === 'OGH' ? 'Officers\' Guest House' : 'Officers\' Rest House'}</div>`;
+                    const displayRooms = rooms.filter(r => r.building === b);
+
+                    displayRooms.forEach(r => {
+                        const currentLvl = roomConfigs[`${b}_${r.id}`] || (b === 'OGH' ? '13' : '11');
+                        html += `<div class="config-card">
+                        <div style="font-weight:bold;margin-bottom:5px;">${r.id} <span style="font-weight:normal;font-size:0.8rem">(${r.type})</span></div>
+                        <select onchange="allotmentUi.updateConfig('${r.building}', '${r.id}', this.value)" style="width:100%;padding:5px;">
+                            ${[6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17].map(l => `<option value="${l}" ${currentLvl == l ? 'selected' : ''}>Level ${l}+</option>`).join('')}
+                        </select>
+                    </div>`;
+                    });
+                });
+                container.innerHTML = html;
+            },
+            updateConfig: (bld, rid, val) => {
+                roomConfigs[`${bld}_${rid}`] = val;
+            },
+            saveConfig: () => {
+                localStorage.setItem(CONFIG_KEY, JSON.stringify(roomConfigs));
+                alert('Configuration saved!');
+            },
+            loadExistingForOptimization: () => {
+                const fStr = document.getElementById('optDateFrom').value;
+                const tStr = document.getElementById('optDateTo').value;
+                if (!fStr || !tStr) return alert("Select date range");
+
+                const fromDate = new Date(fStr); fromDate.setHours(0, 0, 0, 0);
+                const toDate = new Date(tStr); toDate.setHours(23, 59, 59, 999);
+
+                // Clear rows
+                document.getElementById('allotmentRowsContainer').innerHTML = '';
+                allotmentUi.rowCount = 0;
+
+                const includeOrh = document.getElementById('includeOrhReq').checked;
+
+                // Gather bookings
+                let count = 0;
+                rooms.forEach(r => {
+                    if (!includeOrh && r.building !== currentBuilding) return;
+
+                    r.bookings.forEach(b => {
+                        const bIn = new Date(b.checkIn);
+                        const bOut = new Date(b.checkOut);
+
+                        // Overlap check
+                        if (bIn < toDate && bOut > fromDate && b.category !== 'Maintenance') {
+                            // Map fields to assistant format
+                            // Default Level 13, Default Status Serving (User must adjust)
+                            allotmentUi.addRow({
+                                level: 13,
+                                status: 'Serving',
+                                beds: 1, // Assume 1 bed/room unless specified
+                                gf: false,
+                                from: bIn,
+                                to: bOut,
+                                purpose: b.category === 'Official' || b.category === 'On Duty' ? 'Duty' : (b.category === 'Private' ? 'Personal' : 'Guest')
+                            });
+                            count++;
+                        }
+                    });
+                });
+
+                if (count === 0) alert("No bookings found in this range.");
+                else alert(`Loaded ${count} bookings. Please adjust Level/Status for accuracy.`);
+            },
+            addRow: (data = null) => {
+                allotmentUi.rowCount++;
+                const div = document.createElement('div');
+                div.className = 'allotment-row';
+                div.id = `reqRow_${allotmentUi.rowCount}`;
+
+                // Generate hours 0-23
+                let hoursOpt = '';
+                for (let i = 0; i < 24; i++) { hoursOpt += `<option value="${i}">${i.toString().padStart(2, '0')}:00</option>`; }
+
+                div.innerHTML = `
+                <select class="req-level">
+                    ${[8, 9, 10, 11, 12, 13, 14, 15, 16, 17].map(l => `<option value="${l}" ${data && data.level === l ? 'selected' : ''}>Level ${l}</option>`).join('')}
+                </select>
+                <select class="req-status">
+                    <option value="Serving" ${data && data.status === 'Serving' ? 'selected' : ''}>Serving</option>
+                    <option value="Retired" ${data && data.status === 'Retired' ? 'selected' : ''}>Retired</option>
+                </select>
+                <input type="number" class="req-beds" value="${data ? data.beds : 1}" min="1" style="width:100%;">
+                <div style="display:flex; justify-content:center;"><input type="checkbox" class="req-gf" ${data && data.gf ? 'checked' : ''}></div>
+                
+                <div class="time-select-group">
+                    <input type="date" class="req-date-from" required>
+                    <select class="req-hour-from">${hoursOpt}</select>
+                </div>
+                
+                <div class="time-select-group">
+                    <input type="date" class="req-date-to" required>
+                    <select class="req-hour-to">${hoursOpt}</select>
+                </div>
+
+                <select class="req-purpose">
+                    <option value="Duty" ${data && data.purpose === 'Duty' ? 'selected' : ''}>Duty</option>
+                    <option value="Personal" ${data && data.purpose === 'Personal' ? 'selected' : ''}>Personal</option>
+                    <option value="Guest" ${data && data.purpose === 'Guest' ? 'selected' : ''}>Guest</option>
+                </select>
+                <button class="btn-delete" onclick="document.getElementById('reqRow_${allotmentUi.rowCount}').remove()">×</button>
+            `;
+
+                if (data) {
+                    // Set times
+                    div.querySelector('.req-date-from').valueAsDate = data.from;
+                    div.querySelector('.req-hour-from').value = data.from.getHours();
+                    div.querySelector('.req-date-to').valueAsDate = data.to;
+                    div.querySelector('.req-hour-to').value = data.to.getHours();
+                } else {
+                    const now = new Date();
+                    const tomorrow = new Date(now); tomorrow.setDate(tomorrow.getDate() + 1);
+                    div.querySelector('.req-date-from').valueAsDate = now;
+                    div.querySelector('.req-date-to').valueAsDate = tomorrow;
+                }
+
+                document.getElementById('allotmentRowsContainer').appendChild(div);
+            },
+            generateTestData: () => {
+                const count = prompt("How many requests?", "5");
+                if (!count || isNaN(count)) return;
+
+                document.getElementById('allotmentRowsContainer').innerHTML = '';
+
+                for (let i = 0; i < parseInt(count); i++) {
+                    const isServing = Math.random() > 0.3;
+                    const purpose = Math.random() > 0.5 ? 'Duty' : (Math.random() > 0.5 ? 'Personal' : 'Guest');
+                    const level = 8 + Math.floor(Math.random() * 10); // 8-17
+                    const beds = 1 + Math.floor(Math.random() * 2); // 1-2 beds
+
+                    const start = new Date();
+                    start.setDate(start.getDate() + Math.floor(Math.random() * 5));
+                    start.setHours(Math.floor(Math.random() * 23), 0, 0, 0);
+
+                    const end = new Date(start);
+                    end.setDate(end.getDate() + 1 + Math.floor(Math.random() * 3));
+
+                    allotmentUi.addRow({
+                        level: level,
+                        status: isServing ? 'Serving' : 'Retired',
+                        beds: beds,
+                        gf: Math.random() > 0.8,
+                        from: start,
+                        to: end,
+                        purpose: purpose
+                    });
+                }
+            },
+            calculateAllotment: () => {
+                const rows = document.querySelectorAll('.allotment-row');
+                const requests = [];
+
+                rows.forEach((row, index) => {
+                    const dateFrom = new Date(row.querySelector('.req-date-from').value);
+                    dateFrom.setHours(parseInt(row.querySelector('.req-hour-from').value), 0, 0, 0);
+
+                    const dateTo = new Date(row.querySelector('.req-date-to').value);
+                    dateTo.setHours(parseInt(row.querySelector('.req-hour-to').value), 0, 0, 0);
+
+                    requests.push({
+                        id: index + 1,
+                        level: parseInt(row.querySelector('.req-level').value),
+                        status: row.querySelector('.req-status').value,
+                        beds: parseInt(row.querySelector('.req-beds').value),
+                        gfPref: row.querySelector('.req-gf').checked,
+                        from: dateFrom,
+                        to: dateTo,
+                        purpose: row.querySelector('.req-purpose').value
+                    });
+                });
+
+                if (requests.length === 0) return;
+
+                // 1. Priority Scoring
+                requests.forEach(r => {
+                    let pScore = 0;
+                    if (r.purpose === 'Duty') pScore = 100;
+                    else if (r.purpose === 'Personal') pScore = 50;
+                    else pScore = 10;
+
+                    if (r.status === 'Serving') pScore += 20;
+
+                    r.score = pScore + r.level;
+                });
+
+                // Sort by score desc
+                requests.sort((a, b) => b.score - a.score);
+
+                const resultsDiv = document.getElementById('allotmentResults');
+                resultsDiv.innerHTML = '<h3>Allotment Plan</h3>';
+
+                // Get relevant rooms
+                const includeOrh = document.getElementById('includeOrhReq').checked;
+
+                const availableRooms = rooms.filter(r => {
+                    // Exclude Room 13 always
+                    if (r.id === '13' && r.building === 'OGH') return false;
+
+                    if (includeOrh) return r.building === 'OGH' || r.building === 'ORH';
+                    return r.building === currentBuilding;
+                });
+
+                // Deep copy to simulate allocation
+                const simulationState = JSON.parse(JSON.stringify(availableRooms));
+
+                requests.forEach(req => {
+                    let html = `<div class="allotment-result-row">
+                    <div style="margin-bottom:5px;">
+                        <span class="allotment-score">Score: ${req.score}</span> 
+                        <strong>L${req.level} ${req.status} - ${req.purpose}</strong> 
+                        <span style="color:var(--text-muted); font-size:0.85rem">(${req.beds} beds, ${req.from.toLocaleString([], { month: 'numeric', day: 'numeric', hour: 'numeric' })} to ${req.to.toLocaleString([], { month: 'numeric', day: 'numeric', hour: 'numeric' })})</span>
+                    </div>`;
+
+                    const allocated = [];
+                    let neededBeds = req.beds;
+
+                    // Filter suitable rooms
+                    let suitableRooms = simulationState.filter(r => {
+                        const minLevel = parseInt(roomConfigs[`${r.building}_${r.id}`] || 13);
+                        return req.level >= minLevel;
+                    });
+
+                    // --- Sorting Logic for Allotment ---
+                    const preferGF = req.gfPref || req.status === 'Retired' || req.purpose === 'Personal';
+
+                    suitableRooms.sort((a, b) => {
+                        // 1. GF Priority
+                        const isAGF = a.building === 'OGH' && parseInt(a.id) <= 13;
+                        const isBGF = b.building === 'OGH' && parseInt(b.id) <= 13;
+
+                        if (preferGF) {
+                            if (isAGF && !isBGF) return -1;
+                            if (!isAGF && isBGF) return 1;
+                        } else {
+                            // If not specifically requesting GF, prefer upper floors to save GF for seniors/retired
+                            if (!isAGF && isBGF) return -1;
+                            if (isAGF && !isBGF) return 1;
+                        }
+
+                        // 2. Bed Capacity Optimization
+                        // If req > 2 beds, prefer 4-Bedded rooms
+                        if (req.beds > 2) {
+                            const isA4 = a.type.includes('4-Bedded');
+                            const isB4 = b.type.includes('4-Bedded');
+                            if (isA4 && !isB4) return -1;
+                            if (!isA4 && isB4) return 1;
+                        }
+                        // If req <= 2 beds, prefer 2-bedded (standard) to save 4-bedded
+                        else {
+                            const isA4 = a.type.includes('4-Bedded');
+                            const isB4 = b.type.includes('4-Bedded');
+                            if (!isA4 && isB4) return -1;
+                            if (isA4 && !isB4) return 1;
+                        }
+
+                        // 3. High Quota First (Save lower rooms for lower officers)
+                        const minA = parseInt(roomConfigs[`${a.building}_${a.id}`] || 13);
+                        const minB = parseInt(roomConfigs[`${b.building}_${b.id}`] || 13);
+                        return minB - minA;
+                    });
+
+                    // Find rooms
+                    for (let r of suitableRooms) {
+                        if (neededBeds <= 0) break;
+
+                        // Capacity Check
+                        const capacity = r.type.includes('4-Bedded') ? 4 : 2;
+
+                        // Check availability (include 2h buffer)
+                        const reqStart = req.from.getTime();
+                        const reqEnd = req.to.getTime() + (2 * 60 * 60 * 1000);
+
+                        let isFree = true;
+                        for (let b of r.bookings) {
+                            const bStart = new Date(b.checkIn).getTime();
+                            const bEnd = new Date(b.checkOut).getTime();
+                            if (reqStart < bEnd && reqEnd > bStart) {
+                                isFree = false;
+                                break;
+                            }
+                        }
+
+                        if (isFree) {
+                            r.bookings.push({
+                                checkIn: req.from,
+                                checkOut: req.to,
+                                name: "SIMULATION"
+                            });
+                            allocated.push(`${r.building} ${r.id} (${r.type})`);
+                            neededBeds -= capacity; // Assume full room taken
+                        }
+                    }
+
+                    if (allocated.length > 0) {
+                        html += `<div style="color:var(--available); font-weight:bold;">✅ Allotted: ${allocated.join(', ')}</div>`;
+                    } else {
+                        html += `<div style="color:var(--booked); font-weight:bold;">❌ Unfulfilled. No suitable/free room found.</div>`;
+                    }
+
+                    html += `</div>`;
+                    resultsDiv.innerHTML += html;
+                });
+            }
+        };
+
+        const ui = {
+            updateLastSyncTime: () => {
+                const now = new Date();
+                const el = document.getElementById('lastSyncTime');
+                if (el) el.innerText = `Last Sync: ${now.toLocaleDateString()} ${now.toLocaleTimeString()}`;
+            },
+            forceSync: async () => {
+                const btn = document.getElementById('btnSync');
+                if (btn) btn.innerText = 'Syncing...';
+                try {
+                    const { data, error } = await supabaseClient.from('app_data').select('roomsJson').eq('id', 'state').single();
+                    if (data && !error) {
+                        const parsed = JSON.parse(data.roomsJson);
+                        rooms.forEach(r => r.bookings = []);
+                        rooms.forEach(r => {
+                            const match = parsed.find(p => p.id === r.id && p.building === r.building);
+                            if (match) r.bookings = match.bookings;
+                        });
+                        localStorage.setItem(STORAGE_KEY, data.roomsJson);
+                        ui.updateLastSyncTime();
+                        if (localStorage.getItem(LOGIN_KEY) === 'true') {
+                            ui.renderGrid();
+                        }
+                    } else if (error) {
+                        console.error("Supabase force sync error:", error);
+                        alert("Sync failed. Check connection.");
+                    }
+                } catch (e) {
+                    console.error("Force sync failed", e);
+                    alert("Sync failed. Check connection.");
+                } finally {
+                    if (btn) btn.innerText = 'Sync Now';
+                }
+            },
+            init: () => {
+                if (localStorage.getItem(THEME_KEY) === 'dark') document.body.classList.add('dark-mode');
+                if (localStorage.getItem(LOGIN_KEY) === 'true') {
+                    document.getElementById('loginContainer').style.display = 'none';
+                    document.getElementById('appContainer').style.display = 'block';
+                    ui.renderGrid();
+                }
+            },
+            toggleTheme: () => {
+                document.body.classList.toggle('dark-mode');
+                localStorage.setItem(THEME_KEY, document.body.classList.contains('dark-mode') ? 'dark' : 'light');
+            },
+            handleLogout: () => {
+                localStorage.removeItem(LOGIN_KEY);
+                location.reload();
+            },
+            switchBuilding: (b) => {
+                currentBuilding = b;
+                document.getElementById('btnTabOGH').className = `tab-btn ${b === 'OGH' ? 'active' : ''}`;
+                document.getElementById('btnTabORH').className = `tab-btn ${b === 'ORH' ? 'active' : ''}`;
+                ui.renderGrid();
+            },
+            closeModal: (id) => document.getElementById(id).style.display = 'none',
+            openSettingsModal: () => document.getElementById('settingsModal').style.display = 'flex',
+            renderGrid: () => {
+                const grid = document.getElementById('roomGrid');
+                grid.innerHTML = '';
+                const now = new Date();
+                let occ = 0, blk = 0;
+                const displayRooms = rooms.filter(r => r.building === currentBuilding);
+
+                displayRooms.forEach(room => {
+                    const card = document.createElement('div');
+                    const active = room.bookings.find(b => new Date(b.checkIn) <= now && new Date(b.checkOut) >= now);
+                    const future = room.bookings.filter(b => new Date(b.checkIn) > now).length;
+                    let status = 'available';
+                    if (active) { if (active.category === 'Maintenance') { status = 'blocked'; blk++; } else { status = 'booked'; occ++; } }
+
+                    card.className = `room-card ${status}`;
+                    card.onclick = () => ui.openBookingModal(room.id);
+
+                    const pref = document.getElementById('displayPreference').value;
+                    let txt = 'Vacant';
+                    if (active) txt = (active.category === 'Maintenance') ? 'Maintenance' : (pref === 'ref' && active.reference ? `${active.reference} (${active.name})` : active.name);
+
+                    card.innerHTML = `<div class="status-indicator"></div><div class="room-number">${room.id}</div>
+                <div class="tag-container"><span class="badge badge-type">${room.type}</span>${room.note ? `<span class="badge" style="background:#ddd">${room.note}</span>` : ''}</div>
+                <div class="occupant-info" style="${!active ? 'color:#999' : ''}">${txt}</div>
+                ${future > 0 ? `<div class="upcoming-indicator">${future} Scheduled</div>` : ''}`;
+                    grid.appendChild(card);
+                });
+                document.getElementById('count-total').innerText = displayRooms.length;
+                document.getElementById('count-booked').innerText = occ;
+                document.getElementById('count-blocked').innerText = blk;
+                document.getElementById('count-available').innerText = displayRooms.length - occ - blk;
+            },
+            openBookingModal: (id, pIn, pOut) => {
+                document.getElementById('selectedRoomId').value = id;
+                document.getElementById('modalTitle').innerText = `Room ${id} (${currentBuilding})`;
+                document.getElementById('errorMsg').style.display = 'none';
+                ui.cancelEdit();
+                ui.renderBookingList(id);
+                if (pIn && pOut) { document.getElementById('checkIn').value = pIn; document.getElementById('checkOut').value = pOut; }
+                else {
+                    const now = new Date(); now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+                    document.getElementById('checkIn').value = now.toISOString().slice(0, 16);
+                    const tmrw = new Date(now); tmrw.setDate(tmrw.getDate() + 1);
+                    document.getElementById('checkOut').value = tmrw.toISOString().slice(0, 16);
+                }
+                document.getElementById('bookingModal').style.display = 'flex';
+            },
+            renderBookingList: (id) => {
+                const r = rooms.find(room => room.id === id && room.building === currentBuilding);
+                const list = document.getElementById('bookingList');
+                const now = new Date();
+                r.bookings.sort((a, b) => new Date(a.checkIn) - new Date(b.checkIn));
+                if (r.bookings.length === 0) { list.innerHTML = '<div style="color:#999;font-size:0.9rem">No bookings.</div>'; return; }
+                list.innerHTML = r.bookings.map(b => {
+                    const start = new Date(b.checkIn); const end = new Date(b.checkOut);
+                    const active = start <= now && end >= now;
+                    return `<div class="booking-item"><div><div style="font-weight:600">${b.name} ${active ? '<span class="badge" style="background:#dcfce7;color:green">ACTIVE</span>' : ''}</div><div style="font-size:0.8rem;color:#777">${start.toLocaleString()} - ${end.toLocaleString()}</div></div>
+                <div class="booking-item-actions"><button class="btn-edit" onclick="ui.editBooking('${id}','${b.id}')">&#9998;</button><button class="btn-delete" onclick="dataManager.deleteBooking('${id}','${b.id}')">&times;</button></div></div>`;
+                }).join('');
+            },
+            editBooking: (rid, bid) => {
+                const r = rooms.find(room => room.id === rid && room.building === currentBuilding);
+                const b = r.bookings.find(k => k.id === bid);
+                if (!b) return;
+                document.getElementById('category').value = b.category;
+                document.getElementById('guestName').value = b.name;
+                document.getElementById('referenceName').value = b.reference || '';
+                document.getElementById('guestMobile').value = b.mobile || '';
+                document.getElementById('guestPlace').value = b.place || '';
+                document.getElementById('guestFrom').value = b.arrivalFrom || '';
+                document.getElementById('checkIn').value = b.checkIn;
+                document.getElementById('checkOut').value = b.checkOut;
+                document.getElementById('editingBookingId').value = bid;
+                document.getElementById('formHeader').innerText = "Edit Booking";
+                document.getElementById('btnSave').innerText = "Update";
+                document.getElementById('btnCancelEdit').style.display = 'block';
+                ui.handleCategoryChange();
+            },
+            cancelEdit: () => {
+                document.getElementById('bookingForm').reset();
+                document.getElementById('editingBookingId').value = '';
+                document.getElementById('formHeader').innerText = "Add New Entry";
+                document.getElementById('btnSave').innerText = "Confirm";
+                document.getElementById('btnCancelEdit').style.display = 'none';
+                ui.handleCategoryChange();
+            },
+            handleCategoryChange: () => {
+                const cat = document.getElementById('category').value;
+                const isMaint = cat === 'Maintenance';
+                const ids = ['guestNameGroup', 'referenceNameGroup', 'designationGroup', 'fromGroup', 'mobileGroup'];
+                ids.forEach(id => document.getElementById(id).style.display = isMaint ? 'none' : 'block');
+
+                const name = document.getElementById('guestName');
+                if (isMaint) { name.value = 'Maintenance'; name.removeAttribute('required'); } else { if (name.value === 'Maintenance') name.value = ''; name.setAttribute('required', 'true'); }
+            },
+            openMultiBookModal: () => {
+                document.getElementById('mbBuildingName').innerText = currentBuilding;
+                document.getElementById('multiBookForm').reset();
+                document.getElementById('mbRoomList').innerHTML = '<div style="color:#999;padding:10px">Select dates first.</div>';
+                ui.handleMbCategory();
+                document.getElementById('multiBookModal').style.display = 'flex';
+            },
+            handleMbCategory: () => {
+                const cat = document.getElementById('mbCategory').value;
+                const isMaint = cat === 'Maintenance';
+                const ids = ['mbNameGroup', 'mbRefGroup', 'mbPlaceGroup', 'mbFromGroup', 'mbMobileGroup'];
+                ids.forEach(id => document.getElementById(id).style.display = isMaint ? 'none' : 'block');
+                const name = document.getElementById('mbGuestName');
+                if (isMaint) { name.value = 'Maintenance'; name.removeAttribute('required'); } else { if (name.value === 'Maintenance') name.value = ''; name.setAttribute('required', 'true'); }
+            },
+            checkMultiAvailability: () => {
+                const sIn = new Date(document.getElementById('mbCheckIn').value);
+                const sOut = new Date(document.getElementById('mbCheckOut').value);
+                const div = document.getElementById('mbRoomList');
+                if (isNaN(sIn) || isNaN(sOut) || sIn >= sOut) { div.innerHTML = 'Invalid dates'; return; }
+                const avail = rooms.filter(r => r.building === currentBuilding && !r.bookings.some(b => sIn < new Date(b.checkOut) && sOut > new Date(b.checkIn)));
+                div.innerHTML = avail.length ? avail.map(r => `<div class="checkbox-item"><input type="checkbox" name="mbRooms" value="${r.id}" id="mb_${r.id}"><label for="mb_${r.id}">Room ${r.id}</label></div>`).join('') : 'No rooms';
+            },
+            openReportModal: () => {
+                const now = new Date(); now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+                document.getElementById('reportFrom').value = now.toISOString().slice(0, 16);
+                const tmrw = new Date(now); tmrw.setDate(tmrw.getDate() + 1);
+                document.getElementById('reportTo').value = tmrw.toISOString().slice(0, 16);
+                document.getElementById('reportModal').style.display = 'flex';
+                document.getElementById('reportPreviewArea').style.display = 'none';
+            },
+            generateReport: () => {
+                const fStr = document.getElementById('reportFrom').value;
+                const tStr = document.getElementById('reportTo').value;
+                if (!fStr || !tStr) return alert("Please select valid From and To dates/times");
+
+                const f = new Date(fStr);
+                const t = new Date(tStr);
+
+                let html = '<table class="report-table"><thead><tr><th>Room No.</th><th>नाम/पदनाम</th><th>Guest of (S/Shri)</th><th>कहॉं से</th><th>Mobile No.</th><th>सरकारी/प्राइवेट/अवकाश</th><th>कब से</th><th>कब तक</th></tr></thead><tbody>';
+                let found = false;
+                // Map categories to Hindi/English
+                const catMap = {
+                    'On Duty': 'Official (सरकारी)',
+                    'Private': 'Private (प्राइवेट)',
+                    'Guest': 'Guest',
+                    'Maintenance': 'Maintenance'
+                };
+
+                // Filter by Current Building
+                const reportRooms = rooms.filter(r => r.building === currentBuilding);
+
+                reportRooms.forEach(r => r.bookings.forEach(b => {
+                    if (new Date(b.checkIn) <= t && new Date(b.checkOut) >= f && b.category !== 'Maintenance') {
+                        found = true;
+                        // Combine Name and Designation
+                        let nameDesig = b.name;
+                        if (b.place) nameDesig += ` / ${b.place}`;
+
+                        html += `<tr>
+                        <td>${r.building}-${r.id}</td>
+                        <td>${nameDesig}</td>
+                        <td>${b.reference || ''}</td>
+                        <td>${b.arrivalFrom || ''}</td>
+                        <td>${b.mobile || ''}</td>
+                        <td>${catMap[b.category] || b.category}</td>
+                        <td>${new Date(b.checkIn).toLocaleString()}</td>
+                        <td>${new Date(b.checkOut).toLocaleString()}</td>
+                    </tr>`;
+                    }
+                }));
+                if (!found) html += '<tr><td colspan="8" style="text-align:center">No Data</td></tr>';
+                html += `</tbody></table>`;
+
+                // Add Footer Note
+                html += `
+            <div style="margin-top: 20px; font-size: 0.9rem;">
+                <strong>टिप्‍पणी:-</strong><br>
+                (1) निजी खाते से आरक्षण की राशि अग्रिम रूप से नगद जमा करें ।<br>
+                (2) प्रशासनिक आवश्‍यकतानुसार आरक्षण निरस्‍त किया जा सकता है ।
+            </div>`;
+
+                document.getElementById('reportTableContainer').innerHTML = html;
+                document.getElementById('reportPreviewArea').style.display = 'block';
+            },
+            printReport: () => {
+                const c = document.getElementById('reportTableContainer').innerHTML;
+                const w = window.open('', '_blank');
+                w.document.write(`<html><head><title>Report</title><style>table{width:100%;border-collapse:collapse;font-size:12px}th,td{border:1px solid #000;padding:5px;text-align:left}th{background:#eee}</style></head><body><h2>${currentBuilding} Booking Report</h2>${c}</body></html>`);
+                w.document.close(); w.print();
+            },
+            backupAllData: () => {
+                let csv = 'BookingID,Building,RoomID,Category,Name,Reference,Mobile,Place,FromWhere,CheckIn,CheckOut\n';
+                rooms.forEach(r => {
+                    r.bookings.forEach(b => {
+                        csv += `"${b.id}","${r.building}","${r.id}","${b.category}","${b.name.replace(/"/g, '""')}","${(b.reference || '').replace(/"/g, '""')}","${(b.mobile || '').replace(/"/g, '""')}","${(b.place || '').replace(/"/g, '""')}","${(b.arrivalFrom || '').replace(/"/g, '""')}","${b.checkIn}","${b.checkOut}"\n`;
+                    });
+                });
+                const link = document.createElement("a");
+                link.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+                link.setAttribute("download", `full_backup_${new Date().toISOString().slice(0, 10)}.csv`);
+                document.body.appendChild(link); link.click(); document.body.removeChild(link);
+            },
+            restoreFromBackup: (e) => {
+                const f = e.target.files[0];
+                if (!f) return;
+                const r = new FileReader();
+                r.onload = (evt) => {
+                    const rows = evt.target.result.split('\n').slice(1); // skip header
+                    rooms.forEach(r => r.bookings = []); // Clear existing
+                    let count = 0;
+                    rows.forEach(row => {
+                        if (!row.trim()) return;
+                        const cols = [];
+                        let inQuote = false;
+                        let val = '';
+                        for (let c of row) {
+                            if (c === '"') inQuote = !inQuote;
+                            else if (c === ',' && !inQuote) { cols.push(val); val = ''; }
+                            else val += c;
+                        }
+                        cols.push(val);
+
+                        // Handle variable CSV lengths
+                        if (cols.length >= 10) {
+                            const bld = cols[1].replace(/"/g, '');
+                            const rid = cols[2].replace(/"/g, '');
+                            const room = rooms.find(r => r.id === rid && r.building === bld);
+
+                            if (room) {
+                                let checkIn, checkOut, arrivalFrom;
+
+                                if (cols.length >= 11) {
+                                    // New Format: ..., Place, FromWhere, CheckIn, CheckOut
+                                    arrivalFrom = cols[8].replace(/"/g, '');
+                                    checkIn = cols[9].replace(/"/g, '');
+                                    checkOut = cols[10].replace(/"/g, '');
+                                } else {
+                                    // Old Format: ..., Place, CheckIn, CheckOut
+                                    arrivalFrom = '';
+                                    checkIn = cols[8].replace(/"/g, '');
+                                    checkOut = cols[9].replace(/"/g, '');
+                                }
+
+                                const bObj = {
+                                    id: cols[0].replace(/"/g, ''),
+                                    category: cols[3].replace(/"/g, ''),
+                                    name: cols[4].replace(/"/g, ''),
+                                    reference: cols[5].replace(/"/g, ''),
+                                    mobile: cols[6].replace(/"/g, ''),
+                                    place: cols[7].replace(/"/g, ''),
+                                    arrivalFrom: arrivalFrom,
+                                    checkIn: checkIn,
+                                    checkOut: checkOut
+                                };
+
+                                room.bookings.push(bObj);
+                                count++;
+                            }
+                        }
+                    });
+                    dataManager.saveToLocal();
+                    alert(`Restored ${count} records successfully.`);
+                    ui.closeModal('settingsModal');
+                    e.target.value = ''; // Reset input to allow re-uploading same file if needed
+                };
+                r.readAsText(f);
+            },
+            openTimeline: () => {
+                document.getElementById('timelineBuildingTitle').innerText = currentBuilding;
+                const container = document.getElementById('timelineContainer');
+                const today = new Date(); today.setHours(0, 0, 0, 0);
+                let html = '<div style="min-width:920px"><div class="timeline-header-row">';
+                for (let i = 0; i < 14; i++) { const d = new Date(today.getTime() + i * 86400000); html += `<div class="timeline-day">${d.getDate()}</div>`; }
+                html += '</div>';
+                rooms.filter(r => r.building === currentBuilding).forEach(r => {
+                    html += `<div class="timeline-row"><div class="timeline-room-label">${r.id}</div><div class="timeline-track">`;
+
+                    // Add Grid Lines
+                    for (let i = 0; i < 14; i++) {
+                        const leftPct = (i / 14) * 100;
+                        html += `<div class="timeline-grid-line" style="left:${leftPct}%"></div>`;
+                    }
+
+                    r.bookings.forEach(b => {
+                        const start = new Date(b.checkIn); const end = new Date(b.checkOut);
+                        const endRange = new Date(today.getTime() + 14 * 86400000);
+                        if (end > today && start < endRange) {
+                            const s = start < today ? today : start;
+                            const e = end > endRange ? endRange : end;
+                            const totalMs = 14 * 86400000;
+                            const durationMs = e - s;
+                            const offsetMs = s - today;
+
+                            const left = (offsetMs / totalMs) * 100;
+                            const w = (durationMs / totalMs) * 100;
+
+                            // Ensure a minimum width for visibility
+                            const widthStyle = Math.max(w, 0.5);
+
+                            let bg = 'var(--booked)';
+                            if (b.category === 'Maintenance') bg = 'var(--blocked)';
+                            else if (b.category === 'On Duty') bg = 'var(--cat-duty)';
+                            else if (b.category === 'Private') bg = 'var(--cat-private)';
+                            else if (b.category === 'Guest') bg = 'var(--cat-guest)';
+
+                            html += `<div class="timeline-bar" style="left:${left}%;width:${widthStyle}%;background:${bg}" title="${b.name}">${b.name}</div>`;
+                        }
+                    });
+                    html += '</div></div>';
+                });
+                container.innerHTML = html + '</div>';
+                document.getElementById('timelineModal').style.display = 'flex';
+            },
+            printTimeline: () => {
+                const c = document.getElementById('timelineContainer').innerHTML;
+                const w = window.open('', '_blank');
+                w.document.write(`<html><head><title>Timeline</title><style>
+                :root {
+                    --booked: #ef4444;
+                    --blocked: #94a3b8;
+                    --cat-duty: #2563eb;
+                    --cat-private: #d97706;
+                    --cat-guest: #7c3aed;
+                    --border-color: #e2e8f0;
+                }
+                @page { size: landscape; margin: 1cm; }
+                body { font-family: sans-serif; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+                .timeline-header-row { display: flex; margin-left: 50px; border-bottom: 1px solid #000; padding-bottom: 5px; }
+                .timeline-day { flex: 1; text-align: center; border-right: 1px solid #eee; font-size: 10px; }
+                .timeline-row { display: flex; align-items: center; border-bottom: 1px solid #ccc; height: 30px; position: relative; }
+                .timeline-room-label { width: 50px; font-weight: bold; font-size: 10px; flex-shrink: 0; }
+                .timeline-track { flex: 1; position: relative; height: 100%; border-left: 1px solid #000; }
+                .timeline-grid-line { position: absolute; top:0; bottom:0; width:1px; background:#eee; }
+                .timeline-bar { position: absolute; height: 20px; top: 5px; background: #ef4444; color: white; font-size: 9px; overflow: hidden; white-space: nowrap; padding: 0 4px; border-radius: 3px; }
+            </style></head><body><h2>${currentBuilding} Timeline</h2>${c}</body></html>`);
+                w.document.close();
+                // Small delay to ensure styles load
+                setTimeout(() => { w.print(); w.close(); }, 500);
+            },
+            openSearchModal: () => { document.getElementById('searchModal').style.display = 'flex'; document.getElementById('searchResults').innerHTML = ''; },
+            performSearch: () => {
+                const sIn = new Date(document.getElementById('searchCheckIn').value);
+                const sOut = new Date(document.getElementById('searchCheckOut').value);
+                const div = document.getElementById('searchResults');
+                if (isNaN(sIn) || isNaN(sOut) || sIn >= sOut) { div.innerHTML = 'Invalid dates'; return; }
+                const avail = rooms.filter(r => r.building === currentBuilding && !r.bookings.some(b => sIn < new Date(b.checkOut) && sOut > new Date(b.checkIn)));
+                div.innerHTML = avail.map(r => `<div style="padding:10px;border-bottom:1px solid #eee;display:flex;justify-content:space-between"><span>Room ${r.id}</span><button onclick="ui.bookFromSearch('${r.id}')">Book</button></div>`).join('');
+            },
+            bookFromSearch: (id) => {
+                const sIn = document.getElementById('searchCheckIn').value; const sOut = document.getElementById('searchCheckOut').value;
+                ui.closeModal('searchModal'); ui.openBookingModal(id, sIn, sOut);
+            }
+        };
+
+        const dataManager = {
+            saveToLocal: async () => {
+                // 1. Immediately update UI & local state
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(rooms));
+                ui.renderGrid();
+
+                // 2. Sync changes to cloud DB
+                try {
+                    const stateData = JSON.stringify(rooms);
+                    const { error } = await supabaseClient.from('app_data').upsert({ id: 'state', roomsJson: stateData });
+                    if (error) console.error("Supabase upsert error:", error);
+                } catch (e) {
+                    console.error("Supabase save failed", e);
+                }
+            },
+            saveBooking: (data, id) => {
+                const room = rooms.find(r => r.id === data.roomId && r.building === data.building);
+                if (id) {
+                    const idx = room.bookings.findIndex(b => b.id === id);
+                    if (idx !== -1) room.bookings[idx] = { id, ...data };
+                } else {
+                    room.bookings.push({ id: Date.now().toString(), ...data });
+                }
+                dataManager.saveToLocal();
+            },
+            deleteBooking: (rid, bid) => {
+                if (!confirm('Delete?')) return;
+                const room = rooms.find(r => r.id === rid && r.building === currentBuilding);
+                room.bookings = room.bookings.filter(b => b.id !== bid);
+                dataManager.saveToLocal();
+                ui.renderGrid();
+                ui.openBookingModal(rid);
+            }
+        };
+
+        // Global exposure
+        window.ui = ui;
+        window.allotmentUi = allotmentUi;
+        window.dataManager = dataManager;
+
+        // Handlers
+        document.getElementById('loginForm').onsubmit = (e) => {
+            e.preventDefault();
+            const u = document.getElementById('username').value;
+            const p = document.getElementById('password').value;
+            const stored = JSON.parse(localStorage.getItem(CRED_KEY) || '{"u":"admin","p":"password"}');
+            if (u === stored.u && p === stored.p) {
+                localStorage.setItem(LOGIN_KEY, 'true');
+                ui.init();
+            } else {
+                document.getElementById('loginError').style.display = 'block';
+            }
+        };
+
+        document.getElementById('bookingForm').onsubmit = (e) => {
+            e.preventDefault();
+            const rId = document.getElementById('selectedRoomId').value;
+            const eId = document.getElementById('editingBookingId').value;
+            const cIn = document.getElementById('checkIn').value;
+            const cOut = document.getElementById('checkOut').value;
+
+            const room = rooms.find(r => r.id === rId && r.building === currentBuilding);
+            const overlap = room.bookings.some(b => {
+                if (eId && b.id === eId) return false;
+                return (new Date(cIn) < new Date(b.checkOut) && new Date(cOut) > new Date(b.checkIn));
+            });
+            if (overlap) { alert("Dates overlap!"); return; }
+
+            const data = {
+                roomId: rId, building: currentBuilding,
+                category: document.getElementById('category').value,
+                name: document.getElementById('guestName').value,
+                reference: document.getElementById('referenceName').value,
+                mobile: document.getElementById('guestMobile').value,
+                place: document.getElementById('guestPlace').value,
+                arrivalFrom: document.getElementById('guestFrom').value,
+                checkIn: cIn, checkOut: cOut
+            };
+            dataManager.saveBooking(data, eId ? eId : null);
+            ui.cancelEdit();
+            ui.renderBookingList(rId);
+        };
+
+        document.getElementById('multiBookForm').onsubmit = (e) => {
+            e.preventDefault();
+            const selected = Array.from(document.querySelectorAll('input[name="mbRooms"]:checked')).map(c => c.value);
+            if (!selected.length) return alert("Select rooms");
+            const data = {
+                building: currentBuilding,
+                category: document.getElementById('mbCategory').value,
+                name: document.getElementById('mbGuestName').value,
+                reference: document.getElementById('mbReference').value,
+                mobile: document.getElementById('mbGuestMobile').value,
+                place: document.getElementById('mbGuestPlace').value,
+                arrivalFrom: document.getElementById('mbGuestFrom').value,
+                checkIn: document.getElementById('mbCheckIn').value,
+                checkOut: document.getElementById('mbCheckOut').value
+            };
+            selected.forEach(rid => dataManager.saveBooking({ ...data, roomId: rid }, null));
+            alert("Booked!");
+            ui.closeModal('multiBookModal');
+        };
+
+        window.handleLogin = (e) => {
+            e.preventDefault();
+            document.getElementById('loginForm').dispatchEvent(new Event('submit'));
+        };
+
+        ui.init();
+    </script>
+</body>
+
+</html>
