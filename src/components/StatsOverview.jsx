@@ -22,23 +22,23 @@ export default function StatsOverview({ rooms = [], currentBuilding = 'OGH' }) {
       } else {
         occupiedCount++;
       }
-    } else {
-      // Vacant room - check if arriving in next 24 hours
-      const hasUpcoming = (room.bookings || []).some(b => {
-        const bIn = new Date(b.checkIn);
-        const diffMs = bIn.getTime() - now.getTime();
-        return diffMs > 0 && diffMs <= 24 * 60 * 60 * 1000;
-      });
-      if (hasUpcoming) {
-        upcoming24hCount++;
-      }
+    }
+
+    // Check if any booking arrives in next 24 hours (including currently occupied rooms)
+    const hasUpcoming = (room.bookings || []).some(b => {
+      const bIn = new Date(b.checkIn);
+      const diffMs = bIn.getTime() - now.getTime();
+      return diffMs > 0 && diffMs <= 24 * 60 * 60 * 1000;
+    });
+    if (hasUpcoming) {
+      upcoming24hCount++;
     }
   });
 
   const totalCount = displayRooms.length;
-  // Vacant ready rooms (not occupied, not maintenance, not arriving in 24h)
-  const vacantReadyCount = Math.max(0, totalCount - occupiedCount - blockedCount - upcoming24hCount);
-  const totalAvailable = vacantReadyCount + upcoming24hCount;
+  // Vacant ready rooms (not currently occupied and not maintenance)
+  const vacantReadyCount = Math.max(0, totalCount - occupiedCount - blockedCount);
+  const totalAvailable = vacantReadyCount;
   const occupancyRate = totalCount > 0 ? Math.round((occupiedCount / totalCount) * 100) : 0;
 
   return (

@@ -33,14 +33,37 @@ export function saveLocalRooms(rooms) {
   }
 }
 
+import { DEFAULT_SETTINGS } from '../algorithms/autoAllotment';
+
 /**
- * Load room configuration (minimum pay levels)
+ * Load room configuration (minimum priority scores)
  */
 export function getStoredRoomConfigs() {
   try {
     const saved = localStorage.getItem(STORAGE_KEYS.CONFIG);
     if (saved) {
-      return { ...DEFAULT_ROOM_CONFIGS, ...JSON.parse(saved) };
+      const parsed = JSON.parse(saved);
+      // Migrate legacy pay level values (e.g. 11, 13, 14, 15, 17) to priority scores
+      const hasLegacyLevels = Object.values(parsed).some(v => {
+        const num = parseInt(v, 10);
+        return !isNaN(num) && num > 0 && num <= 25;
+      });
+
+      if (hasLegacyLevels) {
+        const migrated = {};
+        Object.keys(DEFAULT_ROOM_CONFIGS).forEach(key => {
+          const oldVal = parseInt(parsed[key] || 13, 10);
+          if (key === 'OGH_13' || oldVal >= 17) migrated[key] = '1000';
+          else if (oldVal >= 15) migrated[key] = '250';
+          else if (oldVal === 14) migrated[key] = '220';
+          else if (oldVal === 13) migrated[key] = '180';
+          else migrated[key] = '100';
+        });
+        localStorage.setItem(STORAGE_KEYS.CONFIG, JSON.stringify(migrated));
+        return migrated;
+      }
+
+      return { ...DEFAULT_ROOM_CONFIGS, ...parsed };
     }
   } catch (e) {
     console.error('Error reading room configs', e);
@@ -53,6 +76,28 @@ export function getStoredRoomConfigs() {
  */
 export function saveRoomConfigs(configs) {
   localStorage.setItem(STORAGE_KEYS.CONFIG, JSON.stringify(configs));
+}
+
+/**
+ * Load Allotment Engine v7 settings
+ */
+export function getStoredAllotmentSettings() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEYS.ALLOTMENT_SETTINGS);
+    if (saved) {
+      return { ...DEFAULT_SETTINGS, ...JSON.parse(saved) };
+    }
+  } catch (e) {
+    console.error('Error reading allotment settings', e);
+  }
+  return { ...DEFAULT_SETTINGS };
+}
+
+/**
+ * Save Allotment Engine v7 settings
+ */
+export function saveAllotmentSettings(settings) {
+  localStorage.setItem(STORAGE_KEYS.ALLOTMENT_SETTINGS, JSON.stringify(settings));
 }
 
 /**

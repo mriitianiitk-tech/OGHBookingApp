@@ -53,16 +53,17 @@ export default function RoomGrid({
         occupiedCount++;
       }
     } else {
-      const hasUpcoming = (room.bookings || []).some(b => {
-        const bIn = new Date(b.checkIn);
-        const diffMs = bIn.getTime() - now.getTime();
-        return diffMs > 0 && diffMs <= 24 * 60 * 60 * 1000;
-      });
-      if (hasUpcoming) {
-        upcoming24hCount++;
-      } else {
-        vacantCount++;
-      }
+      vacantCount++;
+    }
+
+    // Upcoming in next 24 hours (including currently occupied rooms)
+    const hasUpcoming = (room.bookings || []).some(b => {
+      const bIn = new Date(b.checkIn);
+      const diffMs = bIn.getTime() - now.getTime();
+      return diffMs > 0 && diffMs <= 24 * 60 * 60 * 1000;
+    });
+    if (hasUpcoming) {
+      upcoming24hCount++;
     }
   });
 
@@ -86,7 +87,7 @@ export default function RoomGrid({
       } else if (statusFilter === 'blocked') {
         if (!activeBooking || activeBooking.category !== 'Maintenance') return false;
       } else if (statusFilter === 'upcoming') {
-        if (activeBooking) return false;
+        // Show any room that has an upcoming booking arriving in next 24h (including occupied)
         const hasUpcoming = (room.bookings || []).some(b => {
           const bIn = new Date(b.checkIn);
           const diffMs = bIn.getTime() - now.getTime();

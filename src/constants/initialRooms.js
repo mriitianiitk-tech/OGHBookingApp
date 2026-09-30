@@ -48,17 +48,30 @@ export const INITIAL_ROOMS = [
   { id: 'T8', type: '2-Bedded', restricted: false, building: 'ORH', floor: 'Transit', beds: 2, note: 'Offline Transit' }
 ];
 
-// Generate default pay-level entitlement thresholds
+// Generate default room priority score thresholds (1000 = Manual Only, never auto-allotted)
 export const DEFAULT_ROOM_CONFIGS = {};
 INITIAL_ROOMS.forEach(r => {
-  let level = 11; // Base default for ORH
+  let score = 100; // Base default for ORH transit
   if (r.building === 'OGH') {
-    level = 13; // Base default for OGH
-    if (r.id === '13') level = 17; // VVIP
-    else if (r.type.includes('VIP') && !r.type.includes('Semi')) level = 15;
-    else if (r.type.includes('Semi-VIP')) level = 14;
+    if (r.id === '13') {
+      score = 1000; // 1000 = Highest Priority (Manual Only, never on auto)
+    } else if (r.type.includes('VIP') && !r.type.includes('Semi')) {
+      score = 250; // VIP Suites (09, 12, 25)
+    } else if (r.type.includes('Semi-VIP')) {
+      score = 220; // Semi-VIP (14A)
+    } else if (r.floor === 'Ground') {
+      score = 180; // Ground Floor Standard Suites
+    } else {
+      score = 140; // First Floor Standard Suites
+    }
+  } else if (r.building === 'ORH') {
+    if (['101', '203'].includes(r.id)) {
+      score = 120; // ORH Buffer Suites
+    } else {
+      score = 100; // ORH Transit Suites
+    }
   }
-  DEFAULT_ROOM_CONFIGS[`${r.building}_${r.id}`] = level.toString();
+  DEFAULT_ROOM_CONFIGS[`${r.building}_${r.id}`] = score.toString();
 });
 
 export const STORAGE_KEYS = {
@@ -66,7 +79,8 @@ export const STORAGE_KEYS = {
   CONFIG: 'blw_room_config',
   LOGIN: 'blw_logged_in',
   CRED: 'blw_credentials',
-  THEME: 'blw_theme'
+  THEME: 'blw_theme',
+  ALLOTMENT_SETTINGS: 'blw_allotment_settings_v7'
 };
 
 export const CATEGORIES = [

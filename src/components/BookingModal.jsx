@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { CATEGORIES } from '../constants/initialRooms';
-import { X, Calendar, User, Phone, MapPin, Briefcase, FileText, Trash2, Edit2, Printer } from 'lucide-react';
+import { X, Calendar, User, Phone, MapPin, Briefcase, FileText, Trash2, Edit2, Printer, Zap } from 'lucide-react';
 import { formatDateTimeDDMMYYYY } from '../utils/dateUtils';
+import { calculateStayCalendarMetrics } from '../algorithms/autoAllotment';
+import { getStoredAllotmentSettings } from '../services/storageService';
 
 export default function BookingModal({
   isOpen,
@@ -54,6 +56,20 @@ export default function BookingModal({
     setEditingId(null);
     setErrorMessage('');
   };
+
+  const surgeMetrics = useMemo(() => {
+    if (!formData.checkIn || !formData.checkOut) return null;
+    const s = new Date(formData.checkIn);
+    const e = new Date(formData.checkOut);
+    if (isNaN(s.getTime()) || isNaN(e.getTime()) || s >= e) return null;
+    try {
+      const settings = getStoredAllotmentSettings();
+      const metrics = calculateStayCalendarMetrics(s, e, settings);
+      return metrics.peakDays > 0 ? metrics : null;
+    } catch (err) {
+      return null;
+    }
+  }, [formData.checkIn, formData.checkOut]);
 
   if (!isOpen || !room) return null;
 
@@ -352,6 +368,28 @@ export default function BookingModal({
               />
             </div>
           </div>
+
+          {surgeMetrics && (
+            <div style={{
+              background: 'rgba(245, 158, 11, 0.1)',
+              border: '1px solid rgba(245, 158, 11, 0.35)',
+              borderRadius: 'var(--radius-sm)',
+              padding: '8px 12px',
+              marginBottom: 12,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              fontSize: '0.82rem'
+            }}>
+              <Zap size={16} color="#d97706" style={{ flexShrink: 0 }} />
+              <div>
+                <strong style={{ color: '#b45309' }}>Peak Calendar Surge:</strong>{' '}
+                <span>
+                  Stay crosses <strong>{surgeMetrics.peakDays} peak day{surgeMetrics.peakDays > 1 ? 's' : ''}</strong> ({surgeMetrics.reasons.join(', ')}). Expect high VIP arrival pressure.
+                </span>
+              </div>
+            </div>
+          )}
 
           {errorMessage && (
             <div style={{ color: 'var(--booked)', fontSize: '0.84rem', fontWeight: 600, marginBottom: 12 }}>
